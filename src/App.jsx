@@ -8,7 +8,7 @@ import Table from "react-bootstrap/Table";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
-import Confetti from "react-confetti";
+// import Confetti from "react-confetti";
 // import useWindowSize from "react-use/lib/useWindowSize";
 
 let shops = [
@@ -41,7 +41,8 @@ function App() {
   const [productName, setProductName] = useState("");
   const [selectedShop, setSelectedShop] = useState(shops[0].id);
   const [selectedCategory, setSelectedCategory] = useState(categories[0].id);
-  const [confettiVisible, setConfettiVisible] = useState(false);
+  const [allBought, setAllBought] = useState(false);
+  // const [confettiVisible, setConfettiVisible] = useState(false);
   // Product obje Arrayine Karakter Eklememizi Sağlayan Fonksiyon
 
   const addProduct = () => {
@@ -66,25 +67,13 @@ function App() {
   // Ürüne Tıkladığımız zaman İsBoughtı True Yapan (satın alındı gösteren) Fonksiyon
 
   const toggleIsBought = (id) => {
-    setProduct((prevProducts) =>
-      prevProducts.map((item) =>
-        item.id === id ? { ...item, isBought: true } : item
-      )
+    let copyProduct = product.map((item) =>
+      item.id === id ? { ...item, isBought: true } : item
     );
-    allProductBought();
-  };
-
-  useEffect(() => {
-    allProductBought();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [product]);
-
-  const allProductBought = () => {
-    if (product.every((item) => item.isBought)) {
-      setConfettiVisible(true);
-    } else {
-      setConfettiVisible(false);
+    if (copyProduct.every((item) => item.isBought)) {
+      alert("tamam");
     }
+    setProduct(() => copyProduct);
   };
 
   // Ürün Silmemizi Sağlayan Fonksiyon
@@ -92,12 +81,11 @@ function App() {
     setProduct((prevProducts) => prevProducts.filter((item) => item.id !== id));
   };
 
-  const runConfetti = () => {
-    if (product.length > 0 && confettiVisible) {
-      return <Confetti width={1920} height={1080} />;
+  useEffect(() => {
+    if (allBought) {
+      alert("Alışveriş Tamamlandı");
     }
-    return null; // Eğer koşul sağlanmazsa null döndür
-  };
+  }, [allBought]);
 
   return (
     <>
@@ -110,7 +98,6 @@ function App() {
             value={productName}
             onChange={(e) => {
               setProductName(e.target.value);
-              console.log(e.target.value);
             }}
           />
         </Form.Group>
@@ -118,7 +105,6 @@ function App() {
           value={selectedShop}
           onChange={(e) => {
             setSelectedShop(e.target.value);
-            console.log(e.target.value);
           }}
           aria-label="Default select example"
         >
@@ -133,7 +119,6 @@ function App() {
           value={selectedCategory}
           onChange={(e) => {
             setSelectedCategory(e.target.value);
-            console.log(e.target.value);
           }}
           aria-label="Default select example"
         >
@@ -170,7 +155,10 @@ function App() {
                     <td>
                       <Button
                         variant="danger"
-                        onClick={() => deleteProduct(item.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteProduct(item.id);
+                        }}
                       >
                         Delete
                       </Button>
@@ -182,7 +170,6 @@ function App() {
           </Col>
         </Row>
       </Container>
-      {runConfetti()}
     </>
   );
 }
