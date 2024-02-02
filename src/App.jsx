@@ -8,6 +8,7 @@ import Table from "react-bootstrap/Table";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
+import Fuse from "fuse.js";
 // import Confetti from "react-confetti";
 // import useWindowSize from "react-use/lib/useWindowSize";
 
@@ -41,7 +42,53 @@ function App() {
   const [productName, setProductName] = useState("");
   const [selectedShop, setSelectedShop] = useState(shops[0].id);
   const [selectedCategory, setSelectedCategory] = useState(categories[0].id);
-  const [allBought, setAllBought] = useState(false);
+  const allBought = false;
+  const [filteredShopId, setFilteredShopId] = useState(null);
+  const [filteredCategory, setFilteredCategory] = useState(null);
+  const [filteredStatus, setFilteredStatus] = useState(null);
+  const [filteredName, setFilteredName] = useState("");
+  const filteredProducts = product.filter((product) => {
+    let result = true;
+    let myProductBought = product.isBought;
+
+    // is Bought
+    if (filteredStatus === true) {
+      result = result && myProductBought === true;
+    }
+    if (filteredStatus === false) {
+      result = result && myProductBought !== true;
+    }
+
+    // Name
+    if (filteredName !== "") {
+      const fuse = new Fuse(product, { keys: ["name"] });
+      const isIncluded = fuse
+        .search(filteredName)
+        .find((p) => p.item.id === product.id);
+      result = result && isIncluded;
+    }
+
+    // Shop
+    if (filteredShopId !== null) {
+      const isIncluded = product.shop === filteredShopId;
+      result = result && isIncluded;
+    }
+
+    // Category
+    if (filteredCategory !== null) {
+      const isIncluded = product.categories == filteredCategory;
+      result = result && isIncluded;
+    }
+    return result;
+
+    // if (filteredName !== "") {
+    //   const fuse = new Fuse(product, { keys: ["name"] });
+    //   const searchedProductsForName = fuse.search(filteredName);
+    // } else {
+    //   return product;
+    // }
+  });
+
   // const [confettiVisible, setConfettiVisible] = useState(false);
   // Product obje Arrayine Karakter Eklememizi Sağlayan Fonksiyon
 
@@ -132,6 +179,82 @@ function App() {
         <Button onClick={addProduct}>Ekle</Button>
       </Form>
 
+      <Form onSubmit={addProduct}>
+        <Form.Group controlId="exampleForm.ControlInput1">
+          <div key={`default-radio`} className="mb-3">
+            <Form.Check // prettier-ignore
+              type={"radio"}
+              id={`default`}
+              label={`Tümü`}
+              name={`isBought`}
+              checked={filteredStatus === null}
+              onClick={() => {
+                setFilteredStatus(null);
+              }}
+            />
+            <Form.Check // prettier-ignore
+              type={"radio"}
+              id={`default-radio`}
+              label={`Satın Alındı`}
+              name={`isBought`}
+              checked={filteredStatus === true}
+              onClick={() => {
+                setFilteredStatus(true);
+              }}
+            />
+
+            <Form.Check
+              type={"radio"}
+              label={`Satın Alınmadı`}
+              id={`default-radio-2`}
+              name={`isBought`}
+              checked={filteredStatus === false}
+              onClick={() => {
+                setFilteredStatus(false);
+              }}
+            />
+          </div>
+          <Form.Label>Ürün Filtreleyiniz</Form.Label>
+          <Form.Control
+            type="text"
+            placeholder="örn: "
+            value={filteredName}
+            onChange={(event) => {
+              setFilteredName(event.target.value);
+            }}
+          />
+        </Form.Group>
+        <Form.Select
+          value={filteredShopId}
+          onChange={(e) => {
+            setFilteredShopId(e.target.value);
+          }}
+          aria-label="Default select example"
+        >
+          <option>Market</option>
+          {shops.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.name}
+            </option>
+          ))}
+        </Form.Select>
+        <Form.Select
+          value={filteredCategory}
+          onChange={(e) => {
+            setFilteredCategory(e.target.value);
+          }}
+          aria-label="Default select example"
+        >
+          <option>Kategori</option>
+          {categories.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.name}
+            </option>
+          ))}
+        </Form.Select>
+        <Button>Filtrele</Button>
+      </Form>
+
       <ul></ul>
       <Container>
         <Row>
@@ -146,7 +269,7 @@ function App() {
                 </tr>
               </thead>
               <tbody>
-                {product.map((item) => (
+                {filteredProducts.map((item) => (
                   <tr onClick={() => toggleIsBought(item.id)} key={item.id}>
                     <td>{item.name}</td>
                     <td>{item.shop}</td>
