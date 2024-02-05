@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 import Button from "react-bootstrap/Button";
 import "../node_modules/bootstrap/dist/css/bootstrap.min.css";
@@ -38,16 +38,18 @@ let categories = [
 ];
 
 function App() {
-  const [product, setProduct] = useState([]);
+  const [products, setProducts] = useState([]);
   const [productName, setProductName] = useState("");
   const [selectedShop, setSelectedShop] = useState(shops[0].id);
   const [selectedCategory, setSelectedCategory] = useState(categories[0].id);
-  const allBought = false;
   const [filteredShopId, setFilteredShopId] = useState(null);
   const [filteredCategory, setFilteredCategory] = useState(null);
   const [filteredStatus, setFilteredStatus] = useState(null);
   const [filteredName, setFilteredName] = useState("");
-  const filteredProducts = product.filter((product) => {
+
+  console.log(products);
+
+  const filteredProducts = products.filter((product) => {
     let result = true;
     let myProductBought = product.isBought;
 
@@ -61,22 +63,23 @@ function App() {
 
     // Name
     if (filteredName !== "") {
-      const fuse = new Fuse(product, { keys: ["name"] });
+      const fuse = new Fuse(products, { keys: ["name"] });
+
       const isIncluded = fuse
         .search(filteredName)
-        .find((p) => p.item.id === product.id);
-      result = result && isIncluded;
+        .find((f) => f.item.id == product.id);
+      result = result && !!isIncluded;
     }
 
     // Shop
     if (filteredShopId !== null) {
-      const isIncluded = product.shop === filteredShopId;
+      const isIncluded = product.shop == filteredShopId;
       result = result && isIncluded;
     }
 
     // Category
     if (filteredCategory !== null) {
-      const isIncluded = product.categories == filteredCategory;
+      const isIncluded = product.category == filteredCategory;
       result = result && isIncluded;
     }
     return result;
@@ -94,7 +97,7 @@ function App() {
 
   const addProduct = () => {
     // Aynı isimde ürün kontrolü
-    if (product.some((item) => item.name === productName)) {
+    if (products.some((item) => item.name === productName)) {
       alert("Daha önce aynı üründen zaten eklenmiş!");
       return;
     }
@@ -102,37 +105,31 @@ function App() {
     const newProduct = {
       id: nanoid(),
       name: productName,
-      category: categories.find(
-        (category) => category.id === parseInt(selectedCategory)
-      ).name,
-      shop: shops.find((shop) => shop.id === parseInt(selectedShop)).name,
+      category: selectedCategory,
+      shop: selectedShop,
       isBought: false,
     };
-    setProduct((oldProduct) => [...oldProduct, newProduct]);
+    setProducts((oldProduct) => [...oldProduct, newProduct]);
   };
 
   // Ürüne Tıkladığımız zaman İsBoughtı True Yapan (satın alındı gösteren) Fonksiyon
 
   const toggleIsBought = (id) => {
-    let copyProduct = product.map((item) =>
+    let copyProduct = products.map((item) =>
       item.id === id ? { ...item, isBought: true } : item
     );
     if (copyProduct.every((item) => item.isBought)) {
       alert("tamam");
     }
-    setProduct(() => copyProduct);
+    setProducts(() => copyProduct);
   };
 
   // Ürün Silmemizi Sağlayan Fonksiyon
   const deleteProduct = (id) => {
-    setProduct((prevProducts) => prevProducts.filter((item) => item.id !== id));
+    setProducts((prevProducts) =>
+      prevProducts.filter((item) => item.id !== id)
+    );
   };
-
-  useEffect(() => {
-    if (allBought) {
-      alert("Alışveriş Tamamlandı");
-    }
-  }, [allBought]);
 
   return (
     <>
@@ -272,8 +269,14 @@ function App() {
                 {filteredProducts.map((item) => (
                   <tr onClick={() => toggleIsBought(item.id)} key={item.id}>
                     <td>{item.name}</td>
-                    <td>{item.shop}</td>
-                    <td>{item.category}</td>
+                    <td>{shops.find((shop) => shop.id == item.shop).name}</td>
+                    <td>
+                      {
+                        categories.find(
+                          (category) => category.id == item.category
+                        ).name
+                      }
+                    </td>
                     <td>{item.isBought ? "✅" : "❌"}</td>
                     <td>
                       <Button
